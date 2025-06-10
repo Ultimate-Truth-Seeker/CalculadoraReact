@@ -7,7 +7,7 @@ export default [
   { ignores: ['dist'] },
   {
     files: ['**/*.{js,jsx}'],
-    ignores: ['.storybook/**', 'vitest.workspace.js'],
+    ignores: ['.storybook/**'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -31,6 +31,7 @@ export default [
       ],
       // Aquí está la regla custom
       'semi': ['error', 'never'],
+      "max-len": ["error", { "code": 120 }],
     },
   },
 ]
