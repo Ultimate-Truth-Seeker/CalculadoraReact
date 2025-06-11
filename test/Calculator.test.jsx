@@ -3,8 +3,13 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Calculator from '../src/components/Calculator'  // ajusta ruta
 
-const click = async (text) =>
-  await userEvent.click(screen.getByRole('button', { name: text }))
+const click = async (text) => {
+  const dispOrbutton = screen.getAllByText(text)
+  await userEvent.click(dispOrbutton.pop())
+}
+
+const res = (text) =>
+  screen.getAllByText(text).findIndex(el => el.ariaLabel === 'display')
 
 describe('<Calculator /> UI behaviour', () => {
   beforeEach(() => {
@@ -15,12 +20,12 @@ describe('<Calculator /> UI behaviour', () => {
     await click('1')
     await click('2')
     await click('3')
-    expect(screen.getByTestId('display')).toHaveTextContent('123')
+    expect(res('123')).toBeGreaterThan(-1)
 
     // pulsa 10 dígitos: el último debe ignorarse
     for (const d of '456789012') await click(d)
-    expect(screen.getByTestId('display').textContent.length).toBe(9)
-    expect(screen.getByTestId('display')).toHaveTextContent('123456789')
+    expect(screen.getByLabelText('display').textContent.length).toBe(9)
+    expect(res('123456789')).toBeGreaterThan(-1)
   })
 
   it('cuenta el punto como carácter dentro del límite', async () => {
@@ -28,14 +33,14 @@ describe('<Calculator /> UI behaviour', () => {
     await click('.')
     await click('2')
     // “1.2” son 3 caracteres
-    expect(screen.getByTestId('display')).toHaveTextContent('1.2')
+    expect(res('1.2')).toBeGreaterThan(-1)
   })
 
   it('resetea display tras pulsar operación y primer número', async () => {
     await click('7')
     await click('+')
     await click('3') // debe limpiar antes de mostrar “3”
-    expect(screen.getByTestId('display')).toHaveTextContent('3')
+    expect(res('3')).toBeGreaterThan(-1)
   })
 
   it('calcula inmediatamente al encadenar operaciones', async () => {
@@ -43,7 +48,7 @@ describe('<Calculator /> UI behaviour', () => {
     await click('×')
     await click('5')
     await click('-')          // debe mostrar 20 en el display
-    expect(screen.getByTestId('display')).toHaveTextContent('20')
+    expect(res('20')).toBeGreaterThan(-1)
   })
 
   it('botón "=" solo muestra el resultado', async () => {
@@ -51,7 +56,7 @@ describe('<Calculator /> UI behaviour', () => {
     await click('÷')
     await click('4')
     await click('=')
-    expect(screen.getByTestId('display')).toHaveTextContent('2')
+    expect(res('2')).toBeGreaterThan(-1)
   })
 
   it('muestra ERROR si resultado supera 999 999 999', async () => {
@@ -59,14 +64,14 @@ describe('<Calculator /> UI behaviour', () => {
     await click('×')
     await click('9')
     await click('=')
-    expect(screen.getByTestId('display')).toHaveTextContent('ERROR')
+    expect(res('ERROR')).toBeGreaterThan(-1)
   })
 
   it('el signo menos cuenta como carácter y respeta límite', async () => {
     await click('1')
     await click('±')  // botón de cambio de signo (por ej. ±)
-    expect(screen.getByTestId('display')).toHaveTextContent('-1')
-    expect(screen.getByTestId('display').textContent.length).toBe(2)
+    expect(res('-1')).toBeGreaterThan(-1)
+    expect(screen.getByLabelText('display').textContent.length).toBe(2)
   })
 
   it('la regla de 9 caracteres se mantiene tras divisiones largas', async () => {
@@ -74,7 +79,7 @@ describe('<Calculator /> UI behaviour', () => {
     await click('÷')
     await click('3')
     await click('=')
-    const result = screen.getByTestId('display').textContent
+    const result = screen.getByLabelText('display').textContent
     expect(result.length).toBeLessThanOrEqual(9)
   })
 })
